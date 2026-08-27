@@ -1,0 +1,6 @@
+{
+  "framework": "vite",
+  "installCommand": "pnpm install --config.onlyBuiltDependencies=esbuild",
+  "buildCommand": "pnpm run build",
+  "outputDirectory": "dist/public"
+}

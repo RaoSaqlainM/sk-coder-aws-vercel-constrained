@@ -1,0 +1,88 @@
+services:
+  runtime:
+    build:
+      context: ./runtime
+    image: sk-coder-runtime:aws-constrained
+    command: ["true"]
+
+  registry-proxy:
+    image: ubuntu/squid:latest
+    volumes:
+      - ./deploy/registry-proxy.squid.conf:/etc/squid/squid.conf:ro
+    tmpfs:
+      - /run
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 96
+    mem_limit: 64m
+    mem_reservation: 32m
+    cpus: 0.15
+    networks:
+      installer:
+        aliases:
+          - registry-proxy
+      registry-egress: {}
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+    env_file:
+      - path: /etc/sk-coder/settings
+        required: true
+    environment:
+      PORT: 3001
+      DEPLOYMENT_TIER: aws-constrained
+      WORKSPACE_ROOT: /var/lib/sk-coder-aws/workspaces
+      WORKSPACE_METADATA_PATH: /var/lib/sk-coder-aws/workspaces/.registry/workspaces.json
+      OPERATION_METADATA_PATH: /var/lib/sk-coder-aws/workspaces/.registry/operations.json
+      CAPACITY_LEDGER_PATH: /var/lib/sk-coder-aws/workspaces/.registry/capacity.json
+      PACKAGE_CACHE_ROOT: /var/lib/sk-coder-aws/workspaces/.cache/packages
+      RUNTIME_IMAGE: sk-coder-runtime:aws-constrained
+      DEPENDENCY_INSTALL_NETWORK_NAME: sk-coder-aws-installer
+    ports:
+      - "127.0.0.1:3001:3001"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /var/lib/sk-coder-aws/workspaces:/var/lib/sk-coder-aws/workspaces
+    depends_on:
+      runtime:
+        condition: service_completed_successfully
+      registry-proxy:
+        condition: service_started
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 192
+    mem_limit: 320m
+    mem_reservation: 192m
+    cpus: 0.5
+    restart: unless-stopped
+
+  owner-dashboard:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: https://api.medical4me.com/api
+        VITE_WS_URL: wss://api.medical4me.com/api/ws/terminal
+        VITE_OWNER_DASHBOARD_HOST: owner.medical4me.com
+        VITE_DEPLOYMENT_TIER: aws-constrained
+    ports:
+      - "127.0.0.1:8080:80"
+    depends_on:
+      backend:
+        condition: service_started
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 96
+    mem_limit: 96m
+    mem_reservation: 48m
+    cpus: 0.15
+    restart: unless-stopped
+
+networks:
+  installer:
+    name: sk-coder-aws-installer
+    internal: true
+  registry-egress:
+    name: sk-coder-aws-registry-egress
