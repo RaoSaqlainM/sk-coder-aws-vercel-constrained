@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { AWS_RUNTIME_WAIT_MESSAGE, hasAvailableRuntimeSlot, supportsRunnerInDeployment } from "./deploymentConstraints.js";
+import { AWS_RUNTIME_WAIT_MESSAGE, hasAvailableRuntimeSlot, supportsRunnerInDeployment, workspaceStateAllowsAccess } from "./deploymentConstraints.js";
 
 describe("AWS constrained runtime policy", () => {
     it("accepts the declared Node, TypeScript, Python, Bash, C, and C++ runner aliases", () => {
@@ -17,5 +17,12 @@ describe("AWS constrained runtime policy", () => {
         expect(hasAvailableRuntimeSlot(0, 1)).toBe(true);
         expect(hasAvailableRuntimeSlot(1, 1)).toBe(false);
         expect(AWS_RUNTIME_WAIT_MESSAGE).toContain("browser storage");
+    });
+
+    it("permits only the delete-undo lifecycle route to use a scheduled workspace access token", () => {
+        expect(workspaceStateAllowsAccess("active")).toBe(true);
+        expect(workspaceStateAllowsAccess("scheduled-delete")).toBe(false);
+        expect(workspaceStateAllowsAccess("scheduled-delete", true)).toBe(true);
+        expect(workspaceStateAllowsAccess("deleted", true)).toBe(false);
     });
 });

@@ -6,7 +6,7 @@ import { runtimeProfileCatalog } from "../lib/runtimeProfileResolver.js";
 const router = Router();
 router.param("id", async (req, res, next, id) => {
     try {
-        if (await authorizeTerminalSession(id, req.header("x-sk-workspace-access"))) {
+        if (await authorizeTerminalSession(id, req.header("x-sk-workspace-access"), req.path.endsWith("/cancel-delete"))) {
             next();
             return;
         }

@@ -13,7 +13,7 @@ import { beginRuntimeOperationFinalization, completeRuntimeOperationFinalization
 import { reconcileSharedCapacity, reportSharedCapacityUsage } from "./capacityLedger.js";
 import { getHostPressure } from "./operationalMetrics.js";
 import { SerialTaskQueue } from "./serialTaskQueue.js";
-import { AWS_RUNTIME_WAIT_MESSAGE, hasAvailableRuntimeSlot, supportsRunnerInDeployment } from "./deploymentConstraints.js";
+import { AWS_RUNTIME_WAIT_MESSAGE, hasAvailableRuntimeSlot, supportsRunnerInDeployment, workspaceStateAllowsAccess } from "./deploymentConstraints.js";
 export type CommandResult = {
     stdout: string;
     stderr: string;
@@ -447,9 +447,9 @@ export async function createWorkspaceSession(options?: {
         return session;
     });
 }
-export async function authorizeTerminalSession(id: string, token: string | null | undefined) {
+export async function authorizeTerminalSession(id: string, token: string | null | undefined, allowScheduledDelete = false) {
     const record = await getWorkspaceRecord(id);
-    return Boolean(record && record.state === "active" && matchesTerminalAccessToken(token, record.terminalAccessHash));
+    return Boolean(record && workspaceStateAllowsAccess(record.state, allowScheduledDelete) && matchesTerminalAccessToken(token, record.terminalAccessHash));
 }
 export async function getWorkspaceSession(id: string) {
     let session = sessions.get(id);

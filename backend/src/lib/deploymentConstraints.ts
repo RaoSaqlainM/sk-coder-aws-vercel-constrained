@@ -8,3 +8,7 @@ export function supportsRunnerInDeployment(language: string, deploymentTier: str
 export function hasAvailableRuntimeSlot(activeCount: number, maximumCount: number) {
     return activeCount < maximumCount;
 }
+
+export function workspaceStateAllowsAccess(state: string | null | undefined, allowScheduledDelete = false) {
+    return state === "active" || (allowScheduledDelete && state === "scheduled-delete");
+}
