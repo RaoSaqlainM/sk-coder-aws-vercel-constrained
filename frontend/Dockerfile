@@ -1,7 +1,7 @@
 FROM node:22-bookworm-slim AS build
 WORKDIR /app
 COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml* ./
-RUN corepack enable && pnpm install --config.onlyBuiltDependencies=esbuild
+RUN npm install --global pnpm@11.21.0 && pnpm install --config.onlyBuiltDependencies=esbuild
 COPY . .
 ARG VITE_API_URL=""
 ARG VITE_WS_URL=""

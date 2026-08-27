@@ -1,7 +1,7 @@
 FROM node:22-bookworm-slim AS build
 WORKDIR /app
 COPY package.json pnpm-lock.yaml* ./
-RUN corepack enable && pnpm install --config.onlyBuiltDependencies=esbuild
+RUN npm install --global pnpm@11.21.0 && pnpm install --config.onlyBuiltDependencies=esbuild
 COPY . .
 RUN pnpm run build
 
