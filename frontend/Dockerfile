@@ -13,9 +13,9 @@ ENV VITE_WS_URL=$VITE_WS_URL
 ENV VITE_OWNER_DASHBOARD_HOST=$VITE_OWNER_DASHBOARD_HOST
 ENV VITE_DEPLOYMENT_TIER=$VITE_DEPLOYMENT_TIER
 ENV BASE_PATH=$BASE_PATH
-RUN PORT=5173 BASE_PATH=/ pnpm run build
+RUN PORT=5173 pnpm run build
 
 FROM nginx:1.27-alpine
-COPY --from=build /app/dist /usr/share/nginx/html
+COPY --from=build /app/dist/public/ /usr/share/nginx/html/
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 EXPOSE 80
