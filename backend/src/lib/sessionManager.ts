@@ -756,6 +756,7 @@ export async function runCodeInWorkspace(id: string, language: string, code: str
         throw new Error("Program input exceeds the 64 KB source-run limit.");
     await reserveWorkspaceGrowth(id, Buffer.byteLength(code));
     await mkdir(hostRunPath, { recursive: true, mode: 0o777 });
+    await chmod(hostRunPath, 0o777);
     await writeFile(join(hostRunPath, selected.filename), code, "utf8");
     try {
         return await runWorkspaceCommand(id, selected.command, runPath, stdin);
