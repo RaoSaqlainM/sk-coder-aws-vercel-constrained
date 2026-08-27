@@ -23,7 +23,7 @@ The browser copy uses OPFS and IndexedDB where supported. It preserves files for
 5. Copy `deploy/nginx-api.medical4me.com.conf` to Nginx sites-enabled after DNS for `api.medical4me.com` points to this server.
 6. Create the owner password file with `sudo htpasswd -c /etc/nginx/sk-coder-owner.htpasswd YOUR_OWNER_NAME`.
 7. Test Nginx, obtain the API-domain certificate with Certbot, then reload Nginx.
-8. Run `curl -fsS https://api.medical4me.com/api/health` and open the Vercel frontend to complete terminal and runner checks.
+8. Run `curl -fsS https://api.medical4me.com/api/healthz` and open the Vercel frontend to complete terminal and runner checks.
 
 The service builds the runtime image on the server. It may take several minutes on a low-capacity host; keep the SSH session connected until the first build completes.
 
