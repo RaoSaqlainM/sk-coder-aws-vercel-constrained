@@ -65,8 +65,9 @@ services:
       args:
         VITE_API_URL: https://api.medical4me.com/api
         VITE_WS_URL: wss://api.medical4me.com/api/ws/terminal
-        VITE_OWNER_DASHBOARD_HOST: owner.medical4me.com
+        VITE_OWNER_DASHBOARD_HOST: api.medical4me.com
         VITE_DEPLOYMENT_TIER: aws-constrained
+        BASE_PATH: /owner/
     ports:
       - "127.0.0.1:8080:80"
     depends_on:

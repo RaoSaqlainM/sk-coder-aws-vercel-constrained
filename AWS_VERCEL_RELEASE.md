@@ -20,9 +20,9 @@ The browser copy uses OPFS and IndexedDB where supported. It preserves files for
 2. Install Docker Engine, the Docker Compose plugin, Nginx, Certbot, and Apache password tools.
 3. Copy `deploy/aws-server-settings.example` to `/etc/sk-coder/settings`. Set `ADMIN_DASHBOARD_TOKEN` to a long random value. Keep that file readable only by root.
 4. Copy `deploy/sk-coder-aws.service` to `/etc/systemd/system/`, then run `sudo systemctl daemon-reload` and `sudo systemctl enable --now sk-coder-aws`.
-5. Copy `deploy/nginx-api.medical4me.com.conf` and `deploy/nginx-owner.medical4me.com.conf` to Nginx sites-enabled after DNS for `api.medical4me.com` and `owner.medical4me.com` points to this server.
+5. Copy `deploy/nginx-api.medical4me.com.conf` to Nginx sites-enabled after DNS for `api.medical4me.com` points to this server.
 6. Create the owner password file with `sudo htpasswd -c /etc/nginx/sk-coder-owner.htpasswd YOUR_OWNER_NAME`.
-7. Test Nginx, obtain both certificates with Certbot, then reload Nginx.
+7. Test Nginx, obtain the API-domain certificate with Certbot, then reload Nginx.
 8. Run `curl -fsS https://api.medical4me.com/api/health` and open the Vercel frontend to complete terminal and runner checks.
 
 The service builds the runtime image on the server. It may take several minutes on a low-capacity host; keep the SSH session connected until the first build completes.
@@ -37,7 +37,7 @@ Import this repository into Vercel and select the `frontend` directory as the pr
 | `VITE_WS_URL` | `wss://api.medical4me.com/api/ws/terminal` |
 | `VITE_DEPLOYMENT_TIER` | `aws-constrained` |
 
-Deploy the project, then attach `sk-code.vercel.app` or your chosen Vercel domain. The owner dashboard is intentionally served only from `owner.medical4me.com`, not from the public editor domain.
+Deploy the project, then attach `sk-code.vercel.app` or your chosen Vercel domain. The owner dashboard is intentionally served only from `https://api.medical4me.com/owner/`, behind HTTP authentication and the separate owner token, not from the public editor domain.
 
 ## Before calling the service live
 
