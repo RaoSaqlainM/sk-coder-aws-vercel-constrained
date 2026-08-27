@@ -6,6 +6,8 @@ This repository is the **small AWS deployment profile**. It is intentionally dif
 
 Begin with **[AWS_VERCEL_RELEASE.md](AWS_VERCEL_RELEASE.md)** for the AWS backend, HTTPS/WSS, owner dashboard, and Vercel deployment sequence.
 
+For the separate larger Oracle ARM64 profile, use [SK Coder Oracle ARM64 Release](https://github.com/RaoSaqlainM/sk-coder-oracle-arm64-release). Do not combine its runtime images, worker counts, or deployment guides with this AWS profile.
+
 | Path | Purpose |
 |---|---|
 | `frontend/` | Vite frontend for Vercel hosting. |

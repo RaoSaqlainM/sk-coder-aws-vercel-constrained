@@ -21,7 +21,7 @@ The browser copy uses OPFS and IndexedDB where supported. It preserves files for
 3. Copy `deploy/aws-server-settings.example` to `/etc/sk-coder/settings`. Set `ADMIN_DASHBOARD_TOKEN` to a long random value. Keep that file readable only by root.
 4. Copy `deploy/sk-coder-aws.service` to `/etc/systemd/system/`, then run `sudo systemctl daemon-reload` and `sudo systemctl enable --now sk-coder-aws`.
 5. Copy `deploy/nginx-api.medical4me.com.conf` to Nginx sites-enabled after DNS for `api.medical4me.com` points to this server.
-6. Create the owner password file with `sudo htpasswd -c /etc/nginx/sk-coder-owner.htpasswd YOUR_OWNER_NAME`.
+6. Create the owner password file with `sudo htpasswd -c /etc/nginx/sk-coder-owner.htpasswd YOUR_OWNER_NAME`, then set it to `root:www-data` ownership and `640` permissions so Nginx can verify the password hash without exposing the dashboard to other host users.
 7. Test Nginx, obtain the API-domain certificate with Certbot, then reload Nginx.
 8. Run `curl -fsS https://api.medical4me.com/api/healthz` and open the Vercel frontend to complete terminal and runner checks.
 
@@ -37,8 +37,8 @@ Import this repository into Vercel and select the `frontend` directory as the pr
 | `VITE_WS_URL` | `wss://api.medical4me.com/api/ws/terminal` |
 | `VITE_DEPLOYMENT_TIER` | `aws-constrained` |
 
-Deploy the project, then attach `sk-code.vercel.app` or your chosen Vercel domain. The owner dashboard is intentionally served only from `https://api.medical4me.com/owner/`, behind HTTP authentication and the separate owner token, not from the public editor domain.
+Deploy the project, then attach `sk-code.vercel.app` or your chosen Vercel domain. The owner dashboard is intentionally served only from `https://api.medical4me.com/owner/`, behind HTTP authentication and a separate owner token, not from the public editor domain. The owner page does not expose project contents, terminal text, browser data, or credentials; it shows operational capacity, queues, lifecycle state, and workspace identifiers for administration.
 
 ## Before calling the service live
 
-Run the backend health check, create a small private workspace, run Node.js and Python, verify a short npm install, refresh the browser, confirm the terminal reconnects, open the owner dashboard, and test scheduled workspace deletion. Never publish the owner token, the SSH key, `/etc/sk-coder/settings`, user workspaces, or Docker volumes.
+Run the backend health check, create a small private workspace, run Node.js, Python, and C++, verify a short npm install, refresh the browser, confirm the terminal reconnects, open the owner dashboard, and test scheduled workspace deletion. Never publish the owner token, the dashboard password, the SSH key, `/etc/sk-coder/settings`, user workspaces, or Docker volumes.
