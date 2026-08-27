@@ -7,6 +7,7 @@ import { loadBrowserBlob } from "@/lib/browserStorage";
 import { getGuiDisplayStatus, stopGuiDisplay } from "@/lib/guiDisplay";
 import { getWebProjectPreviewStatus, launchWebProjectPreview, stopWebProjectPreview, type WebPreviewSession } from "@/lib/webPreview";
 import { previewFrameKey } from "@/lib/previewFrameKey";
+import { supportsServerProjectPreview as supportsServerProjectPreviewInTier } from "@/lib/deploymentTier";
 import type { FileNode, PreviewViewport } from "@/types/ide";
 type ResultMode = "preview" | "console" | "problems" | "files" | "runtime" | "display";
 function previewAssetEntries(nodes: FileNode[]) {
@@ -36,7 +37,7 @@ function previewProjectFolder(nodes: FileNode[], activePath?: string) {
 }
 export default function PreviewPane() {
     const { fileTree, flatFiles, previewKey, previewPath, settings, updatePreviewSettings, getActiveFile, addTerminalLine, previewResult, setPreviewResult, openFileInTerminal, isRunning, setIsRunning, setFileAssetData, guiDisplay, setGuiDisplay } = useIDEStore();
-    const supportsServerProjectPreview = import.meta.env.VITE_DEPLOYMENT_TIER !== "aws-constrained";
+    const supportsServerProjectPreview = supportsServerProjectPreviewInTier(import.meta.env.VITE_DEPLOYMENT_TIER);
     const iframeRef = useRef<HTMLIFrameElement>(null);
     const viewportStageRef = useRef<HTMLDivElement>(null);
     const previewFileInputRef = useRef<HTMLInputElement>(null);

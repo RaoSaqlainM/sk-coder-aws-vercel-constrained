@@ -9,7 +9,7 @@ function Router() {
     const ownerDashboardHost = import.meta.env.VITE_OWNER_DASHBOARD_HOST;
     const showOwnerDashboard = Boolean(ownerDashboardHost && window.location.hostname === ownerDashboardHost);
     return (<Switch>
-      <Route path="/" component={IndexPage}/>
+      <Route path="/" component={showOwnerDashboard ? AdminPage : IndexPage}/>
       <Route path="/guide"><InformationPage kind="guide"/></Route>
       <Route path="/privacy"><InformationPage kind="privacy"/></Route>
       <Route path="/terms"><InformationPage kind="terms"/></Route>

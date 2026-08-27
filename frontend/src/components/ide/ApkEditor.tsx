@@ -8,6 +8,7 @@ import { closeAfterDraftSave } from "@/lib/apkDraftClose";
 import { isReadableArchiveText, isTextFilename } from "@/lib/archiveText";
 import { getArchiveArtifactStatus } from "@/lib/archiveArtifactStatus";
 import { describeBrowserStorageError } from "@/lib/browserStorageStatus";
+import { supportsServerApkRebuild } from "@/lib/deploymentTier";
 interface ApkFile {
     name: string;
     path: string;
@@ -261,6 +262,7 @@ export default function ApkEditor() {
     const [storageSummary, setStorageSummary] = useState<LocalStorageSummary | null>(null);
     const [packageDetails, setPackageDetails] = useState<PackageDetailsDraft>(EMPTY_PACKAGE_DETAILS);
     const [detectedPackageDetails, setDetectedPackageDetails] = useState<PackageDetailsDraft | null>(null);
+    const allowsServerApkRebuild = supportsServerApkRebuild(import.meta.env.VITE_DEPLOYMENT_TIER);
     const inputRef = useRef<HTMLInputElement>(null);
     const replacementInputRef = useRef<HTMLInputElement>(null);
     const loadVersionRef = useRef(0);
@@ -778,12 +780,12 @@ export default function ApkEditor() {
     }
     function startFullEdit() {
         setShowModeChooser(false);
-        if (backendReady) {
+        if (backendReady && allowsServerApkRebuild) {
             setShowDecodeChooser(true);
             return;
         }
         selectEditMode("full");
-        toast.info("Full local editing is ready. Decode, rebuild, and validation appear when the backend connects.");
+        toast.info(allowsServerApkRebuild ? "Full local editing is ready. Decode, rebuild, and validation appear when the backend connects." : "Archive browsing, text editing, image replacement, and local export remain available here. Server APK decode and rebuild are not offered in this AWS profile.");
     }
     function chooseDecodeLevel(level: DecodeLevel) {
         setDecodeLevel(level);
@@ -791,6 +793,10 @@ export default function ApkEditor() {
         if (level !== "inspect") toast.info("Decode and rebuild are ready when a workspace server is connected. Archive exploration stays available locally now.");
     }
     async function startBackendDecode(level: Exclude<DecodeLevel, "inspect">) {
+        if (!allowsServerApkRebuild) {
+            toast.error("This AWS profile supports local archive work only. Server APK decode and rebuild require the larger deployment.");
+            return;
+        }
         if (archiveTrail.length > 0) {
             toast.info("Return to the root APK archive before starting decode or rebuild.");
             return;
@@ -832,6 +838,10 @@ export default function ApkEditor() {
         }
     }
     async function requestBackendBuild(sign = false) {
+        if (!allowsServerApkRebuild) {
+            toast.error("This AWS profile supports local archive export only. Server APK rebuild is not available.");
+            return;
+        }
         if (archiveTrail.length > 0) {
             toast.info("Return to the root APK archive before starting a build.");
             return;
@@ -1298,7 +1308,7 @@ export default function ApkEditor() {
             <footer className="apk-dialog-footer"><button className="btn btn-ghost" onClick={() => selectEditMode("full")}>Open archive workspace</button></footer>
           </section>
         </div>}
-      {showDecodeChooser && backendReady && files.length > 0 && <div className="apk-dialog-backdrop">
+      {showDecodeChooser && backendReady && allowsServerApkRebuild && files.length > 0 && <div className="apk-dialog-backdrop">
           <section className="apk-dialog apk-decode-dialog" role="dialog" aria-modal="true" aria-labelledby="apk-decode-title" aria-describedby="apk-decode-description">
             <header className="apk-dialog-header"><div><strong id="apk-decode-title">Full edit setup</strong><p id="apk-decode-description">Choose the amount of workspace processing. Job status is the source of truth for decode and rebuild completion.</p></div></header>
             <div className="apk-dialog-body"><div className="apk-dialog-stack">

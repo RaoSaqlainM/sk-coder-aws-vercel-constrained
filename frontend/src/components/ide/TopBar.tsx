@@ -6,6 +6,7 @@ import { getFileCapability } from "@/lib/projectCapabilities";
 import { supportsGuiDisplay } from "@/lib/projectCapabilities";
 import { launchGuiDisplay, stopGuiDisplay } from "@/lib/guiDisplay";
 import { releasePreviousGuiSession } from "@/lib/guiSessionReplacement";
+import { supportsGuiDisplayInTier } from "@/lib/deploymentTier";
 import { toast } from "sonner";
 import { parseErrors } from "@/components/ide/ErrorPanel";
 export default function TopBar() {
@@ -13,7 +14,7 @@ export default function TopBar() {
     const activeFile = getActiveFile();
     const fileCapability = activeFile ? getFileCapability(activeFile) : "none";
     const showRunControl = activePanel === "editor" && Boolean(activeFile) && fileCapability !== "none";
-    const showDisplayControl = activePanel === "editor" && Boolean(activeFile && supportsGuiDisplay(activeFile));
+    const showDisplayControl = activePanel === "editor" && supportsGuiDisplayInTier(import.meta.env.VITE_DEPLOYMENT_TIER) && Boolean(activeFile && supportsGuiDisplay(activeFile));
     async function handleRun() {
         if (isRunning) {
             setIsRunning(false);

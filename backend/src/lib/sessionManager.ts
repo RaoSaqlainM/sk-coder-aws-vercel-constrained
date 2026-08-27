@@ -13,6 +13,7 @@ import { beginRuntimeOperationFinalization, completeRuntimeOperationFinalization
 import { reconcileSharedCapacity, reportSharedCapacityUsage } from "./capacityLedger.js";
 import { getHostPressure } from "./operationalMetrics.js";
 import { SerialTaskQueue } from "./serialTaskQueue.js";
+import { AWS_RUNTIME_WAIT_MESSAGE, hasAvailableRuntimeSlot, supportsRunnerInDeployment } from "./deploymentConstraints.js";
 export type CommandResult = {
     stdout: string;
     stderr: string;
@@ -103,9 +104,8 @@ let terminalToolProbeCache: { expiresAt: number; probes: RuntimeProbe[] } | null
 let workspaceLifecycleQueue = Promise.resolve();
 const ephemeralRunnerQueue = new SerialTaskQueue(RUNNER_MAX_COUNT, RUNNER_QUEUE_MAX_COUNT);
 const docker = new Docker({ socketPath: "/var/run/docker.sock" });
-const awsConstrainedRuntimes = new Set(["node", "nodejs", "javascript", "js", "mjs", "cjs", "typescript", "ts", "tsx", "python", "py", "bash", "shell", "c", "cpp", "cc"]);
 function assertRuntimeSupportedInDeployment(language: string) {
-    if (DEPLOYMENT_TIER === "aws-constrained" && !awsConstrainedRuntimes.has(language.toLowerCase()))
+    if (!supportsRunnerInDeployment(language, DEPLOYMENT_TIER))
         throw new Error("This AWS workspace supports Node.js, TypeScript, Python, Bash, C, and C++ runners. The selected runtime needs the larger Oracle deployment.");
 }
 function run(command: string, args: string[], timeout = COMMAND_TIMEOUT_MS, stdin = ""): Promise<CommandResult> {
@@ -413,8 +413,8 @@ export async function createWorkspaceSession(options?: {
         await removeExpiredWorkspaceSessions();
         await suspendScheduledWorkspaceRuntimes();
         await suspendIdleWorkspaceRuntimes();
-        if (startRuntime && await activeRuntimeCount() >= SESSION_MAX_COUNT)
-            throw new Error("All active runtime slots are busy. Keep the project in browser storage and retry when a running terminal becomes idle.");
+        if (startRuntime && !hasAvailableRuntimeSlot(await activeRuntimeCount(), SESSION_MAX_COUNT))
+            throw new Error(AWS_RUNTIME_WAIT_MESSAGE);
         await mkdir(WORKSPACE_ROOT, { recursive: true, mode: 0o700 });
         await ensureCapacity();
         const id = randomUUID();
@@ -770,8 +770,8 @@ export async function runCodeInWorkspace(id: string, language: string, code: str
 export function runEphemeralCode(language: string, code: string, stdin = "") {
     return ephemeralRunnerQueue.run(() => queueWorkspaceLifecycle(async () => {
     assertRuntimeSupportedInDeployment(language);
-    if (DEPLOYMENT_TIER === "aws-constrained" && await activeRuntimeCount() > 0)
-        throw new Error("The AWS runtime is serving an active terminal. Keep the project in browser storage and retry the runner when that workspace becomes idle.");
+    if (DEPLOYMENT_TIER === "aws-constrained" && !hasAvailableRuntimeSlot(await activeRuntimeCount(), SESSION_MAX_COUNT))
+        throw new Error(AWS_RUNTIME_WAIT_MESSAGE);
     const profiles: Record<string, { filename: string; command: string }> = {
         python: { filename: "main.py", command: "python3 main.py" }, py: { filename: "main.py", command: "python3 main.py" },
         node: { filename: "main.js", command: "node main.js" }, nodejs: { filename: "main.js", command: "node main.js" }, javascript: { filename: "main.js", command: "node main.js" }, js: { filename: "main.js", command: "node main.js" }, mjs: { filename: "main.mjs", command: "node main.mjs" }, cjs: { filename: "main.cjs", command: "node main.cjs" },
