@@ -1293,7 +1293,7 @@ export default function MultiTerminal() {
         <span className="terminal-prompt-label" style={{ color: TERM_COLORS[activeType], fontSize: 11, whiteSpace: "nowrap", maxWidth: 150, overflow: "hidden", textOverflow: "ellipsis" }}>
           {promptLabels[activeType]}
         </span>
-        <input ref={inputRef} className="terminal-input" value={activeState.input} onChange={(e) => updateState(activeTab, { input: e.target.value, histIdx: -1 })} onKeyDown={(e) => handleKeyDown(e, activeTab)} placeholder={placeholders[activeType]} disabled={activeState.running || (activeType === "shell" && workspaceConnection !== "connected")} autoComplete="off" spellCheck={false} aria-label={activeType === "ai" ? "AI Terminal message" : "Terminal command or program input"}/>
+        <input ref={inputRef} className="terminal-input" value={activeState.input} onChange={(e) => updateState(activeTab, { input: e.target.value, histIdx: -1 })} onKeyDown={(e) => handleKeyDown(e, activeTab)} placeholder={placeholders[activeType]} disabled={activeState.running || (activeType === "shell" && workspaceConnection !== "connected")} autoComplete="off" spellCheck={false} enterKeyHint="send" inputMode="text" aria-label={activeType === "ai" ? "AI Terminal message" : "Terminal command or program input"}/>
         <button type="submit" className="terminal-submit" disabled={activeState.running || !activeState.input.trim() || (activeType === "shell" && workspaceConnection !== "connected")} title={activeType === "ai" ? "Ask SK-AI" : "Run command"} aria-label={activeType === "ai" ? "Ask SK-AI" : "Run command"}>
           {activeType === "ai" ? "↑" : "↵"}
         </button>
