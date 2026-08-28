@@ -46,7 +46,7 @@ export function shellQuote(value: string) {
     return `'${value.replaceAll("'", `'"'"'`)}'`;
 }
 export function terminalBootstrapCommand() {
-    return "export PS1='\\$ '; export HISTFILE=/workspace/.skcoder-terminal-history; export HISTSIZE=1000; export HISTFILESIZE=1000; history -r; export PROMPT_COMMAND='history -a; printf \"__SK_CODER_CWD__%s\\n\" \"$PWD\"'; exec bash --noprofile --norc -i";
+    return "export PS1=''; export HISTFILE=/workspace/.skcoder-terminal-history; export HISTSIZE=1000; export HISTFILESIZE=1000; history -r; export PROMPT_COMMAND='history -a; printf \"__SK_CODER_CWD__%s\\n\" \"$PWD\"'; exec bash --noprofile --norc -i";
 }
 export function isTransientTerminalResizeError(error: unknown) {
     return /container not running|cannot resize a stopped container/i.test(error instanceof Error ? error.message : String(error));

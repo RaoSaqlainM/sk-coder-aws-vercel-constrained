@@ -92,9 +92,9 @@ export default function IndexPage() {
             </div>
             <ErrorPanel />
           </div>}
-          {activePanel === "terminal" && (<div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
-              <MultiTerminal />
-            </div>)}
+          <div style={{ flex: 1, minHeight: 0, display: activePanel === "terminal" ? "flex" : "none", flexDirection: "column" }} aria-hidden={activePanel !== "terminal"}>
+            <MultiTerminal />
+          </div>
           {activePanel === "preview" && (<div style={{ flex: 1, minHeight: 0, display: "flex", flexDirection: "column" }}>
               <PreviewPane />
             </div>)}

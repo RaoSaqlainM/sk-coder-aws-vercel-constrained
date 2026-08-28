@@ -431,7 +431,7 @@ export default function MultiTerminal() {
             return;
         const attempt = reconnectAttemptsRef.current.get(tabId) ?? 0;
         reconnectAttemptsRef.current.set(tabId, Math.min(attempt + 1, 6));
-        const delay = Math.min(8000, 300 * 2 ** attempt) + Math.round(Math.random() * 150);
+        const delay = Math.min(4000, 250 * 2 ** attempt) + Math.round(Math.random() * 100);
         const timer = window.setTimeout(() => {
             reconnectTimersRef.current.delete(tabId);
             if (shellTabIdsRef.current.has(tabId))
@@ -509,7 +509,7 @@ export default function MultiTerminal() {
                 connectingTabsRef.current.delete(tabId);
                 reconnectAttemptsRef.current.delete(tabId);
                 terminalErrorMessagesRef.current.delete(tabId);
-                setWorkspaceConnection("checking");
+                setWorkspaceConnection("connected");
                 if (projectSessionIdRef.current !== sessionId) {
                     projectStagedTreeRef.current = localStorage.getItem(workspaceStageRevisionKey(sessionId));
                     workspaceStagingFlightRef.current = null;
@@ -539,12 +539,11 @@ export default function MultiTerminal() {
                 const activeStaging = staging as WorkspaceStagingFlight & { promise: Promise<void> };
                 void activeStaging.promise
                     .then(() => {
-                    setWorkspaceConnection("connected");
                     recoveringTabsRef.current.delete(tabId);
                 })
                     .catch(() => {
                     recoveringTabsRef.current.delete(tabId);
-                    setWorkspaceConnection("offline");
+                    addLine(tabId, "error", "Workspace files could not finish syncing; the terminal remains connected.");
                 })
                     .finally(() => {
                     if (workspaceStagingFlightRef.current?.promise === activeStaging.promise)
@@ -627,20 +626,12 @@ export default function MultiTerminal() {
                 return;
             if (!available) {
                 setWorkspaceConnection("offline");
-                retry = window.setTimeout(() => void connect(), 2000);
-                return;
-            }
-            const status = await getWorkspaceRuntimeStatus();
-            if (disposed)
-                return;
-            if (!status.ready) {
-                setWorkspaceConnection("waiting");
-                retry = window.setTimeout(() => void connect(), 2000);
+                retry = window.setTimeout(() => void connect(), 1000);
                 return;
             }
             await connectShell("shell-1");
             if (!disposed && !terminalSocketsRef.current.has("shell-1"))
-                retry = window.setTimeout(() => void connect(), 2000);
+                retry = window.setTimeout(() => void connect(), 1000);
         };
         void connect();
         return () => {

@@ -33,8 +33,9 @@ describe("appendLimitedOutput", () => {
         expect(durableTerminalSessionName("")).toBe("sk-shell");
     });
 
-    it("stores shell history in the owned workspace before reporting the next prompt", () => {
+    it("stores shell history without emitting a visible shell prompt", () => {
         const command = terminalBootstrapCommand();
+        expect(command).toContain("PS1=''");
         expect(command).toContain("HISTFILE=/workspace/.skcoder-terminal-history");
         expect(command).toContain("history -a");
         expect(command).toContain("history -r");

@@ -1,5 +1,5 @@
 export function isCleanLinuxPrompt(line: string) {
-    return /^node@sk-coder:(?:~|\/workspace(?:\/[^\s$#]+)*)[$#]\s?$/.test(line.trim());
+    return /^(?:[$#]\s?|node@sk-coder:(?:~|\/workspace(?:\/[^\s$#]+)*)[$#]\s?|bash-\d+\.\d+[$#]\s?)$/.test(line.trim());
 }
 
 export function filterConsecutivePromptLines(existing: string[], incoming: string[], lineType: string) {

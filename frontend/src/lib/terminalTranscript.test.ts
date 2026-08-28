@@ -5,6 +5,8 @@ describe("terminal transcript prompt handling", () => {
     it("recognizes a clean Linux workspace prompt", () => {
         expect(isCleanLinuxPrompt("node@sk-coder:~$ ")).toBe(true);
         expect(isCleanLinuxPrompt("node@sk-coder:/workspace/project$ ")).toBe(true);
+        expect(isCleanLinuxPrompt("$ ")).toBe(true);
+        expect(isCleanLinuxPrompt("bash-5.2$ ")).toBe(true);
         expect(isCleanLinuxPrompt("browser-terminal-lifecycle-ok")).toBe(false);
     });
 
@@ -14,5 +16,9 @@ describe("terminal transcript prompt handling", () => {
 
     it("removes carriage-return prompt variants without changing command output", () => {
         expect(filterConsecutivePromptLines(["\rnode@sk-coder:~$"], ["node@sk-coder:~$ ", "browser-ack-once-ok", "\rnode@sk-coder:~$"], "output")).toEqual(["browser-ack-once-ok"]);
+    });
+
+    it("drops isolated shell prompts without dropping dollar-prefixed output", () => {
+        expect(filterConsecutivePromptLines([], ["$ ", "total $5", "bash-5.2$ "], "output")).toEqual(["total $5"]);
     });
 });
