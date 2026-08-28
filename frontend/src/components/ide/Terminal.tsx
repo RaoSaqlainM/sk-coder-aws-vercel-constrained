@@ -14,6 +14,7 @@ import { shouldClearPendingCommand } from "@/lib/terminalCommandRecovery";
 import { extractAIWorkspaceCommand } from "@/lib/aiWorkspaceCommand";
 import { needsWorkspaceStage, planWorkspaceDelta, workspaceTreeRevision } from "@/lib/workspaceConnection";
 import { isSameWorkspaceStagingFlight, type WorkspaceStagingFlight } from "@/lib/workspaceStagingFlight";
+import { awsRunnerCapabilityMessage, supportsServerRunner } from "@/lib/deploymentTier";
 type TermType = "shell" | "python" | "nodejs" | "java" | "ai";
 type TermLine = {
     id: string;
@@ -831,6 +832,11 @@ export default function MultiTerminal() {
                         addLine(tabId, "error", androidArtifact
                             ? `${node.name} is an Android artifact, not a terminal program. Open it in the APK tab to inspect, decode, edit, rebuild, or sign it.`
                             : `${node.name} is an archive, not an executable. Extract or import it, choose the project entry file or build command, then run that source file in SK Shell.`);
+                        return;
+                    }
+                    const extension = node.name.split(".").pop()?.toLowerCase() || "";
+                    if (!supportsServerRunner(extension, import.meta.env.VITE_DEPLOYMENT_TIER)) {
+                        addLine(tabId, "error", awsRunnerCapabilityMessage(extension));
                         return;
                     }
                     const command = workspaceRunCommand(path, node.name);

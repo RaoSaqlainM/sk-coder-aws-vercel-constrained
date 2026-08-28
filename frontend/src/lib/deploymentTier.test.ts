@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { supportsGuiDisplayInTier, supportsServerApkRebuild, supportsServerProjectPreview } from "./deploymentTier";
+import { awsRunnerCapabilityMessage, supportsGuiDisplayInTier, supportsServerApkRebuild, supportsServerProjectPreview, supportsServerRunner } from "./deploymentTier";
 
 describe("AWS constrained frontend capabilities", () => {
   it("hides server project previews, GUI displays, and APK rebuilds in the AWS tier", () => {
@@ -12,5 +12,13 @@ describe("AWS constrained frontend capabilities", () => {
     expect(supportsServerProjectPreview("standard")).toBe(true);
     expect(supportsGuiDisplayInTier("standard")).toBe(true);
     expect(supportsServerApkRebuild("standard")).toBe(true);
+  });
+
+  it("gates unsupported server languages while preserving the AWS image subset", () => {
+    for (const language of ["node", "typescript", "python", "bash", "c", "cpp"]) {
+      expect(supportsServerRunner(language, "aws-constrained")).toBe(true);
+    }
+    expect(supportsServerRunner("go", "aws-constrained")).toBe(false);
+    expect(awsRunnerCapabilityMessage("Go")).toContain("larger Oracle profile");
   });
 });

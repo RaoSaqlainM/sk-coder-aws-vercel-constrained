@@ -3,7 +3,10 @@ import { authorizeTerminalSession, beginWorkspaceStage, cancelWorkspaceDeletion,
 import type { RetentionMode } from "../lib/workspaceRegistry.js";
 import { installedRuntimes } from "../lib/runtimeRegistry.js";
 import { runtimeProfileCatalog } from "../lib/runtimeProfileResolver.js";
+import { DEPLOYMENT_TIER } from "../lib/backendConfig.js";
 const router = Router();
+const workspaceTier = DEPLOYMENT_TIER === "aws-constrained" ? "aws-constrained" : "oracle-workspace";
+const awsRuntimes = new Set(["node", "typescript", "python", "bash", "c", "cpp"]);
 router.param("id", async (req, res, next, id) => {
     try {
         if (await authorizeTerminalSession(id, req.header("x-sk-workspace-access"), req.path.endsWith("/cancel-delete"))) {
@@ -19,7 +22,8 @@ router.param("id", async (req, res, next, id) => {
 router.get("/execute/runtimes", async (_req, res) => {
     const [status, probes] = await Promise.all([workspaceStatus(), probeRuntimeImage()]);
     const availability = new Map(probes.map((probe) => [probe.name, probe.available]));
-    res.json({ runtimes: installedRuntimes.map((runtime) => ({ ...runtime, available: status.ready && availability.get(runtime.name) === true, tier: "oracle-workspace" })), profiles: runtimeProfileCatalog(), status });
+    const runtimes = DEPLOYMENT_TIER === "aws-constrained" ? installedRuntimes.filter((runtime) => awsRuntimes.has(runtime.name)) : installedRuntimes;
+    res.json({ runtimes: runtimes.map((runtime) => ({ ...runtime, available: status.ready && availability.get(runtime.name) === true, tier: workspaceTier })), profiles: runtimeProfileCatalog(), status });
 });
 router.get("/execute/runtimes/probe", async (req, res) => {
     const probes = await probeRuntimeImage(req.query.force === "true");
@@ -35,7 +39,7 @@ router.post("/execute/sessions", async (req, res) => {
         const retentionMode: RetentionMode = requestedRetention === "four-hours" ? "four-hours" : "three-days";
         const session = await createWorkspaceSession({ retentionMode, startRuntime: req.body?.startRuntime !== false });
         const lifecycle = await getWorkspaceLifecycle(session.id);
-        res.status(201).json({ id: session.id, terminalAccessToken: session.terminalAccessToken, cwd: "/", expiresAt: lifecycle.expiresAt, retentionMode: lifecycle.retentionMode, quotaBytes: lifecycle.quotaBytes, tier: "oracle-workspace" });
+        res.status(201).json({ id: session.id, terminalAccessToken: session.terminalAccessToken, cwd: "/", expiresAt: lifecycle.expiresAt, retentionMode: lifecycle.retentionMode, quotaBytes: lifecycle.quotaBytes, tier: workspaceTier });
     }
     catch (error) {
         res.status(503).json({ error: error instanceof Error ? error.message : "Session service unavailable." });
@@ -43,7 +47,7 @@ router.post("/execute/sessions", async (req, res) => {
 });
 router.get("/execute/sessions/:id", async (req, res) => {
     try {
-        res.json({ ...(await getWorkspaceLifecycle(req.params.id)), tier: "oracle-workspace" });
+        res.json({ ...(await getWorkspaceLifecycle(req.params.id)), tier: workspaceTier });
     }
     catch (error) {
         res.status(404).json({ error: error instanceof Error ? error.message : "Workspace session not found." });
@@ -60,7 +64,7 @@ router.get("/execute/sessions/:id/manifest", async (req, res) => {
 router.post("/execute/sessions/:id/heartbeat", async (req, res) => {
     try {
         const lifecycle = await recordWorkspaceActivity(req.params.id);
-        res.json({ ...lifecycle, tier: "oracle-workspace" });
+        res.json({ ...lifecycle, tier: workspaceTier });
     }
     catch (error) {
         res.status(404).json({ error: error instanceof Error ? error.message : "Workspace session not found." });
@@ -71,7 +75,7 @@ router.put("/execute/sessions/:id/retention", async (req, res) => {
     if (requestedRetention !== "three-days" && requestedRetention !== "four-hours")
         return res.status(400).json({ error: "retentionMode must be three-days or four-hours" });
     try {
-        res.json({ ...(await updateWorkspaceRetention(req.params.id, requestedRetention)), tier: "oracle-workspace" });
+        res.json({ ...(await updateWorkspaceRetention(req.params.id, requestedRetention)), tier: workspaceTier });
     }
     catch (error) {
         res.status(404).json({ error: error instanceof Error ? error.message : "Workspace session not found." });
@@ -79,7 +83,7 @@ router.put("/execute/sessions/:id/retention", async (req, res) => {
 });
 router.post("/execute/sessions/:id/delete", async (req, res) => {
     try {
-        res.json({ ...(await scheduleWorkspaceDeletion(req.params.id)), tier: "oracle-workspace" });
+        res.json({ ...(await scheduleWorkspaceDeletion(req.params.id)), tier: workspaceTier });
     }
     catch (error) {
         res.status(404).json({ error: error instanceof Error ? error.message : "Workspace session not found." });
@@ -87,7 +91,7 @@ router.post("/execute/sessions/:id/delete", async (req, res) => {
 });
 router.post("/execute/sessions/:id/cancel-delete", async (req, res) => {
     try {
-        res.json({ ...(await cancelWorkspaceDeletion(req.params.id)), tier: "oracle-workspace" });
+        res.json({ ...(await cancelWorkspaceDeletion(req.params.id)), tier: workspaceTier });
     }
     catch (error) {
         res.status(404).json({ error: error instanceof Error ? error.message : "Workspace session not found." });
@@ -170,10 +174,10 @@ router.post("/execute/sessions/:id/command", async (req, res) => {
     if (!command?.trim())
         return res.status(400).json({ error: "command is required" });
     try {
-        res.json({ ...(await runWorkspaceCommand(req.params.id, command, cwd || "/")), tier: "oracle-workspace" });
+        res.json({ ...(await runWorkspaceCommand(req.params.id, command, cwd || "/")), tier: workspaceTier });
     }
     catch (error) {
-        res.status(400).json({ stdout: "", stderr: error instanceof Error ? error.message : "Command failed.", exitCode: 1, executionTime: 0, tier: "oracle-workspace" });
+        res.status(400).json({ stdout: "", stderr: error instanceof Error ? error.message : "Command failed.", exitCode: 1, executionTime: 0, tier: workspaceTier });
     }
 });
 router.post("/execute/sessions/:id/dependencies", async (req, res) => {
@@ -206,7 +210,7 @@ router.post("/execute", async (req, res) => {
         const result = sessionId
             ? await runCodeInWorkspace(sessionId, language, code, typeof stdin === "string" ? stdin : "")
             : await runEphemeralCode(language, code, typeof stdin === "string" ? stdin : "");
-        res.json({ ...result, ...(sessionId ? { sessionId } : {}), tier: "oracle-workspace" });
+        res.json({ ...result, ...(sessionId ? { sessionId } : {}), tier: workspaceTier });
     }
     catch (error) {
         res.status(503).json({ stdout: "", stderr: error instanceof Error ? error.message : "Execution service unavailable.", exitCode: 1, executionTime: 0, error: "runtime-unavailable", tier: "unavailable" });
