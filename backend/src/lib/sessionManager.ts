@@ -931,7 +931,7 @@ export const RUNTIME_PROBE_DEFINITIONS: Array<{ name: string; label: string; com
     { name: "node", label: "Node.js", command: "node -e \"console.log('node-ok')\"" },
     { name: "csharp", label: ".NET / C#", command: "rm -rf /tmp/sk-coder-dotnet && dotnet new console --force --output /tmp/sk-coder-dotnet >/dev/null && printf 'Console.WriteLine(\"csharp-ok\");\\n' >/tmp/sk-coder-dotnet/Program.cs && dotnet run --project /tmp/sk-coder-dotnet" },
     { name: "typescript", label: "TypeScript", command: "tsx -e \"const value: number = 1; console.log('typescript-ok', value)\"" },
-    { name: "python", label: "Python with NumPy", command: "python3 -c \"import numpy; print('python-numpy-ok', numpy.__version__)\"" },
+    { name: "python", label: "Python", command: "python3 -c \"print('python-ok')\"" },
     { name: "c", label: "C", command: "printf 'int main(void){return 0;}\\n' >/tmp/main.c && gcc /tmp/main.c -o /tmp/main-c && /tmp/main-c" },
     { name: "cpp", label: "C++", command: "printf '#include <iostream>\\nint main(){std::cout << \\\"cpp-ok\\\\n\\\";}\\n' >/tmp/main.cpp && g++ /tmp/main.cpp -o /tmp/main-cpp && /tmp/main-cpp" },
     { name: "java", label: "Java", command: "printf 'class Main { public static void main(String[] args) { System.out.println(\\\"java-ok\\\"); } }\\n' >/tmp/Main.java && javac /tmp/Main.java && java -cp /tmp Main" },
