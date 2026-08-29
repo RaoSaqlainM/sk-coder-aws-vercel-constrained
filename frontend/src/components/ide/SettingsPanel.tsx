@@ -64,8 +64,6 @@ export default function SettingsPanel() {
     const [puterConnecting, setPuterConnecting] = useState(false);
     const [workspaceLifecycle, setWorkspaceLifecycle] = useState<WorkspaceLifecycle | null>(null);
     const [workspaceLoading, setWorkspaceLoading] = useState(false);
-    const [developerPhoto, setDeveloperPhoto] = useState(() => localStorage.getItem("sk-coder-developer-photo") || developerPortrait);
-    const developerPhotoInputRef = useRef<HTMLInputElement>(null);
     const matchingModelPresets = useMemo(() => {
         const query = modelSearch.trim().toLowerCase();
         const models = [...liveModels, ...(isAerolinkKey(keyInput) ? AEROLINK_MODELS : []), ...catalogModels(providerInput, settings.ai.customModels)];
@@ -252,34 +250,6 @@ export default function SettingsPanel() {
         setTokenInput("");
         updateGithubSettings({ token: "", username: "", codespaceActive: "" });
         toast.success("GitHub was disconnected from this browser");
-    }
-    function requestDeveloperPhotoChange() {
-        if (window.prompt("Enter the local edit code") !== "0") {
-            toast.error("Edit code did not match");
-            return;
-        }
-        developerPhotoInputRef.current?.click();
-    }
-    function changeDeveloperPhoto(file: File | undefined) {
-        if (!file?.type.startsWith("image/")) {
-            toast.error("Choose an image file");
-            return;
-        }
-        const reader = new FileReader();
-        reader.onload = () => {
-            const value = typeof reader.result === "string" ? reader.result : "";
-            if (!value)
-                return;
-            try {
-                localStorage.setItem("sk-coder-developer-photo", value);
-                setDeveloperPhoto(value);
-                toast.success("Developer photo updated in this browser");
-            }
-            catch {
-                toast.error("This image is too large to save in this browser");
-            }
-        };
-        reader.readAsDataURL(file);
     }
     const keyStatus = settings.ai.keyStatus;
     return (<div className="settings-overlay" onClick={() => setShowSettings(false)}>
@@ -521,16 +491,13 @@ export default function SettingsPanel() {
                 <div className="settings-section" style={{ borderBottom: "none" }}>
                   <div className="settings-section-title">Contact & Links</div>
                   <div style={{ display: "flex", alignItems: "center", gap: "1rem", padding: "0.75rem", background: "var(--bg-elevated)", borderRadius: "var(--radius)", marginBottom: "0.75rem" }}>
-                    <img src={developerPhoto} alt="Saqlain King" style={{ width: 52, height: 52, borderRadius: "50%", objectFit: "cover", flexShrink: 0, border: "2px solid var(--border-focus)" }}/>
+                    <img src={developerPortrait} alt="Saqlain King" style={{ width: 52, height: 52, borderRadius: "50%", objectFit: "cover", flexShrink: 0, border: "2px solid var(--border-focus)" }}/>
                     <div>
                       <div style={{ fontWeight: 700, fontSize: 13, color: "var(--text-primary)" }}>Saqlain King</div>
                       <div style={{ fontSize: 11, color: "var(--text-muted)", marginTop: 2 }}>Developed by Saqlain King</div>
                       <div style={{ fontSize: 11, color: "var(--text-secondary)", marginTop: 3 }}>Building tools for developers everywhere.</div>
                     </div>
                   </div>
-                  <input ref={developerPhotoInputRef} type="file" accept="image/*" hidden onChange={(event) => changeDeveloperPhoto(event.target.files?.[0])}/>
-                  <button className="btn btn-ghost" style={{ fontSize: 11, padding: "0.2rem 0.45rem", marginBottom: "0.75rem" }} onClick={requestDeveloperPhotoChange}>Change developer photo</button>
-                  <div className="settings-hint" style={{ marginBottom: "0.75rem" }}>The photo change code is a local convenience gate. It does not provide account-level security.</div>
                   <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
                     {[
                 { label: "Report a Bug", href: "/feedback?type=bug", icon: "🐛" },
